@@ -5,6 +5,8 @@ import { slotModel } from "../models/slot.model.js";
 export const allAppointments = async (req, res) => {
 
   try {
+
+    console.log("request received to give all appointments");
     const allAppointments = await appointmentModel.find({});
 
 
