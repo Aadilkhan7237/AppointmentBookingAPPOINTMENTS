@@ -9,7 +9,8 @@ export const allAppointments = async (req, res) => {
     console.log("request received to give all appointments");
     const allAppointments = await appointmentModel.find({});
 
-
+    console.log(allAppointments);
+    console.log("valid response sent");
     res.status(200).json({ message: allAppointments });
 
   } catch (error) {
