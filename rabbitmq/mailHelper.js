@@ -1,15 +1,17 @@
-import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import { createRequire } from "module";
+
 dotenv.config();
 
+const require = createRequire(import.meta.url);
+const { BrevoClient, BrevoEnvironment } = require("@getbrevo/brevo");
 
-const transporter = nodemailer.createTransport({
-    service: "gmail", // or use host/port for SMTP
-    auth: {
-        user: process.env.EMAIL_USER || "aadiluser2002@gmail.com",
-        pass: process.env.GMAIL_APP_PASSWORD,
-    },
+const brevo = new BrevoClient({
+    apiKey: process.env.BREVO_API_KEY,
+    environment: BrevoEnvironment.Production,
 });
+
+// console.log("BREVO_API_KEY", process.env.BREVO_API_KEY);
 
 export const sendMail = async ({
     email,
@@ -18,23 +20,37 @@ export const sendMail = async ({
     text = "",
 }) => {
     try {
-        const info = await transporter.sendMail({
-            from: `"MKHospital" <${process.env.EMAIL_USER}>`,
-            to: email,
+        if (!process.env.BREVO_API_KEY) {
+            throw new Error("BREVO_API_KEY is missing");
+        }
+
+        const payload = {
             subject,
-            html: msg,
-        });
+            htmlContent: msg,
+            sender: {
+                name: "MKHospital",
+                email: "aadiluser2002@gmail.com",
+            },
+            to: [{ email }],
+            ...(text && { textContent: text }),
+        };
+
+        const response = await brevo.transactionalEmails.sendTransacEmail(payload);
+
+        console.log("Mail sent successfully:", response);
 
         return {
             success: true,
-            messageId: info.messageId,
+            messageId: response?.messageId,
         };
     } catch (error) {
         console.error("Mail Error:", error);
 
         return {
             success: false,
-            error: error.message,
+            error:
+                error.response?.body?.message ||
+                error.message,
         };
     }
 };
